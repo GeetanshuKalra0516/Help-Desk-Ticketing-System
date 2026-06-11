@@ -38,6 +38,12 @@ User → Assignment
 
 
 
+
+
+
+
+
+
 Relational Tables
 Table	Columns
 Users	user_id (PK), name, email, role, password_hash
