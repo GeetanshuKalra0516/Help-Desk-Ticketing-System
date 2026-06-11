@@ -1,0 +1,93 @@
+Modules
+User Management: Register, authenticate, assign roles (Admin, Agent, End-User).
+
+Ticket Creation: End-users create tickets with details (title, description, category).
+
+Ticket Assignment: Admin/Agent assigns tickets to support staff.
+
+Ticket Resolution: Agents update resolution notes, mark tickets as resolved.
+
+Priority & Status Management: Track ticket status (Open, In Progress, Resolved, Closed) and priority (Low, Medium, High, Critical).
+
+DevOps: Containerization with Docker, deployment on Kubernetes, CI/CD pipeline with Jenkins.
+
+Testing & Validation: Ensure ticket workflow integrity.
+
+
+
+ER Diagram (Entities & Relationships)
+Entities:
+
+User (user_id, name, email, role, password_hash)
+
+Ticket (ticket_id, title, description, created_date, priority, status, user_id)
+
+Assignment (assignment_id, ticket_id, assigned_to, assigned_date)
+
+Resolution (resolution_id, ticket_id, resolved_by, resolution_notes, resolved_date)
+
+Relationships:
+
+User → Ticket 
+
+Ticket → Assignment 
+
+Ticket → Resolution 
+
+User → Assignment 
+
+
+
+Relational Tables
+Table	Columns
+Users	user_id (PK), name, email, role, password_hash
+Tickets	ticket_id (PK), title, description, created_date, priority, status, user_id (FK)
+Assignments	assignment_id (PK), ticket_id (FK), assigned_to (FK user_id), assigned_date
+Resolutions	resolution_id (PK), ticket_id (FK), resolved_by (FK user_id), resolution_notes, resolved_date
+
+Class diagram
+
++-------------------+
+| User              |
++-------------------+
+| - userId: Long    |
+| - name: String    |
+| - email: String   |
+| - role: Enum      |
+| - password: String|
++-------------------+
+| + getTickets()    |
++-------------------+
+
++-------------------+
+| Ticket            |
++-------------------+
+| - ticketId: Long  |
+| - title: String   |
+| - description: String |
+| - createdDate: Date |
+| - priority: Enum  |
+| - status: Enum    |
++-------------------+
+| + assignTicket()  |
+| + resolveTicket() |
++-------------------+
+
++-------------------+
+| Assignment        |
++-------------------+
+| - assignmentId: Long |
+| - ticket: Ticket     |
+| - assignedTo: User   |
+| - assignedDate: Date |
++-------------------+
+
++-------------------+
+| Resolution        |
++-------------------+
+| - resolutionId: Long |
+| - ticket: Ticket     |
+| - resolvedBy: User   |
+| - resolutionNotes: String |
+| - resolvedDate: Date |
++-------------------+
