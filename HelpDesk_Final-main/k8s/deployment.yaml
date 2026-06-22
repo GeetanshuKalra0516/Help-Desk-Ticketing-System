@@ -72,28 +72,3 @@ spec:
               memory: "512Mi"
               cpu: "500m"
 
-          # -------------------------------------------------------
-          # Health Checks
-          # Kubernetes uses these to know if the app is ready/alive
-          # Uses your /actuator/health endpoint (already in application.properties)
-          # -------------------------------------------------------
-
-          # Readiness Probe: "Is the app ready to receive traffic?"
-          # Kubernetes won't send requests until this passes
-          readinessProbe:
-            httpGet:
-              path: /actuator/health   # Your Spring Actuator health endpoint
-              port: 8081
-            initialDelaySeconds: 60    # Wait 60s before first check (app takes time to start)
-            periodSeconds: 10          # Check every 10 seconds
-            failureThreshold: 6        # Mark as not-ready after 6 consecutive failures
-
-          # Liveness Probe: "Is the app still alive (not frozen/crashed)?"
-          # Kubernetes will restart the pod if this fails
-          livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8081
-            initialDelaySeconds: 90    # Wait 90s before first check
-            periodSeconds: 30          # Check every 30 seconds
-            failureThreshold: 3        # Restart pod after 3 consecutive failures
