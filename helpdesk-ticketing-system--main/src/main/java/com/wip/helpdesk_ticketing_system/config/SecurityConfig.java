@@ -107,15 +107,18 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-
+ 
                 // Swagger
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
                 // ROLE BASED ACCESS
                 .requestMatchers("/users/**").hasRole("ADMIN")
+//                .requestMatchers("/users/**").permitAll()
                 .requestMatchers("/tickets/**").hasAnyRole("ADMIN", "AGENT", "END_USER")
                 .requestMatchers("/assignments/**").hasRole("ADMIN")
                 .requestMatchers("/resolutions/**").hasAnyRole("ADMIN", "AGENT")
+
+
 
                 .anyRequest().authenticated()
             )
@@ -123,6 +126,22 @@ public class SecurityConfig {
 
         return http.build();
     }
+	
+	
+//	@Bean
+//	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+//
+//	    http
+//	        .csrf(csrf -> csrf.disable())
+//	        .authorizeHttpRequests(auth -> auth
+//	            .anyRequest().permitAll()
+//	        );
+//
+//	    return http.build();
+//	}
+	
+	
+	
 //    @Bean
 //    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 //

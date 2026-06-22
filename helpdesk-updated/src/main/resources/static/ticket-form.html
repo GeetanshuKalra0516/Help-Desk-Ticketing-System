@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ticket Form — HelpDesk</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="css/app.css" rel="stylesheet"/>
+</head>
+<body class="app-layout">
+
+<div id="sidebar"></div>
+
+<div id="main">
+  <div id="topbar">
+    <button class="btn btn-sm btn-outline-secondary d-md-none" id="sidebarToggler">
+      <i class="bi bi-list fs-5"></i>
+    </button>
+    <span class="page-title" id="formTitle">New Ticket</span>
+    <a href="tickets.html" class="btn btn-outline-secondary btn-sm ms-auto">
+      <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+  </div>
+
+  <div id="content">
+    <div class="row justify-content-center">
+      <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-4">
+            <form id="ticketForm" novalidate>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+                <input type="text" id="title" class="form-control" placeholder="Brief summary of the issue" required/>
+                <div class="invalid-feedback">Title is required.</div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+                <textarea id="description" class="form-control" rows="5"
+                          placeholder="Describe the issue in detail…" required></textarea>
+                <div class="invalid-feedback">Description is required.</div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Priority <span class="text-danger">*</span></label>
+                  <select id="priority" class="form-select" required>
+                    <option value="">Select priority…</option>
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="CRITICAL">Critical</option>
+                  </select>
+                  <div class="invalid-feedback">Priority is required.</div>
+                </div>
+                <div class="col-md-6" id="statusGroup" style="display:none;">
+                  <label class="form-label fw-semibold">Status</label>
+                  <select id="status" class="form-select">
+                    <option value="OPEN">Open</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="CLOSED">Closed</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-4" id="userGroup">
+                <label class="form-label fw-semibold">Assigned User <span class="text-danger">*</span></label>
+                <select id="userId" class="form-select" required>
+                  <option value="">Select user…</option>
+                </select>
+                <div class="invalid-feedback">Please select a user.</div>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary px-4" id="submitBtn">
+                  <span id="submitText">Create Ticket</span>
+                  <span id="submitSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+                </button>
+                <a href="tickets.html" class="btn btn-outline-secondary">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>
+(async () => {
+  const user = await requireAuth();
+  if (!user) return;
+  buildSidebar(user, 'ticket-form');
+
+  const params = new URLSearchParams(location.search);
+  const ticketId = params.get('id');
+  const isEdit = !!ticketId;
+  const isAdmin = user.role === 'ADMIN';
+  const isAgent = user.role === 'AGENT' || isAdmin;
+
+  if (isEdit) {
+    document.getElementById('formTitle').textContent = 'Edit Ticket';
+    document.getElementById('submitText').textContent = 'Update Ticket';
+    if (isAgent) document.getElementById('statusGroup').style.display = '';
+  }
+
+  // Load users for admin dropdown
+  if (isAdmin) {
+    try {
+      const users = await API.get('/api/users');
+      const sel = document.getElementById('userId');
+      users.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.userId;
+        opt.textContent = `${u.name} (${u.role})`;
+        sel.appendChild(opt);
+      });
+    } catch(e) { /* ignore */ }
+  } else {
+    // For non-admin, set userId to self and hide field
+    document.getElementById('userGroup').style.display = 'none';
+  }
+
+  // Load existing ticket if editing
+  if (isEdit) {
+    try {
+      const ticket = await API.get(`/api/tickets/${ticketId}`);
+      document.getElementById('title').value = ticket.title;
+      document.getElementById('description').value = ticket.description;
+      document.getElementById('priority').value = ticket.priority;
+      document.getElementById('status').value = ticket.status;
+      if (ticket.user) document.getElementById('userId').value = ticket.user.userId;
+    } catch(e) {
+      showToast('Failed to load ticket: ' + e.message, 'danger');
+    }
+  }
+
+  document.getElementById('ticketForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
+
+    document.getElementById('submitSpinner').classList.remove('d-none');
+    document.getElementById('submitBtn').disabled = true;
+
+    const payload = {
+      title: document.getElementById('title').value.trim(),
+      description: document.getElementById('description').value.trim(),
+      priority: document.getElementById('priority').value,
+      userId: isAdmin
+        ? parseInt(document.getElementById('userId').value)
+        : user.userId
+    };
+
+    try {
+      if (isEdit) {
+        await API.put(`/api/tickets/${ticketId}`, payload);
+        // Update status separately if changed
+        const newStatus = document.getElementById('status').value;
+        await API.patch(`/api/tickets/${ticketId}/status?status=${newStatus}`);
+        showToast('Ticket updated successfully!');
+      } else {
+        await API.post('/api/tickets', payload);
+        showToast('Ticket created successfully!');
+      }
+      setTimeout(() => window.location.href = 'tickets.html', 1000);
+    } catch(e) {
+      showToast((isEdit ? 'Update' : 'Create') + ' failed: ' + e.message, 'danger');
+      document.getElementById('submitSpinner').classList.add('d-none');
+      document.getElementById('submitBtn').disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

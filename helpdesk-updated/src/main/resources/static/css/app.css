@@ -1,0 +1,173 @@
+/* HelpDesk App — Global Styles */
+:root {
+  --sidebar-width: 240px;
+  --sidebar-bg: #1e2a3a;
+  --sidebar-text: #b0bec5;
+  --sidebar-active-bg: #2d3f54;
+  --sidebar-active-text: #fff;
+  --topbar-height: 56px;
+  --primary: #0d6efd;
+}
+
+/* Sidebar layout */
+body.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f6f9;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+#sidebar {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  background: var(--sidebar-bg);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+#sidebar .sidebar-brand {
+  padding: 1.25rem 1.5rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+#sidebar .nav-link {
+  color: var(--sidebar-text);
+  padding: 0.65rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+
+#sidebar .nav-link:hover,
+#sidebar .nav-link.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+  border-left-color: var(--primary);
+}
+
+#sidebar .nav-section {
+  padding: 0.5rem 1.5rem 0.25rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(176,190,197,0.55);
+  margin-top: 0.5rem;
+}
+
+#sidebar .sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 1rem 1.5rem;
+}
+
+/* Main content */
+#main {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+#topbar {
+  height: var(--topbar-height);
+  background: #fff;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 900;
+}
+
+#topbar .page-title {
+  font-weight: 600;
+  font-size: 1rem;
+  flex: 1;
+  color: #212529;
+}
+
+#content {
+  padding: 1.75rem;
+  flex: 1;
+}
+
+/* Status & Priority badges */
+.badge-open       { background: #e3f2fd; color: #1565c0; }
+.badge-in-progress{ background: #fff3e0; color: #e65100; }
+.badge-resolved   { background: #e8f5e9; color: #2e7d32; }
+.badge-closed     { background: #eeeeee; color: #424242; }
+
+.badge-low      { background: #e8f5e9; color: #388e3c; }
+.badge-medium   { background: #fff8e1; color: #f9a825; }
+.badge-high     { background: #fff3e0; color: #e65100; }
+.badge-critical { background: #fce4ec; color: #c62828; }
+
+.status-badge, .priority-badge {
+  padding: 0.25em 0.65em;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Cards */
+.stat-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.stat-card .stat-icon {
+  width: 48px; height: 48px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Table */
+.table-card {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.table-card .card-header {
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 1rem 1.25rem;
+}
+
+/* Modal */
+.modal-header { background: #f8f9fa; }
+
+/* Spinner overlay */
+#loadingOverlay {
+  position: fixed; inset: 0;
+  background: rgba(255,255,255,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #sidebar { transform: translateX(-100%); }
+  #sidebar.show { transform: translateX(0); }
+  #main { margin-left: 0; }
+}

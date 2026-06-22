@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Users — HelpDesk</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="css/app.css" rel="stylesheet"/>
+</head>
+<body class="app-layout">
+
+<div id="sidebar"></div>
+
+<div id="main">
+  <div id="topbar">
+    <button class="btn btn-sm btn-outline-secondary d-md-none" id="sidebarToggler">
+      <i class="bi bi-list fs-5"></i>
+    </button>
+    <span class="page-title">Users</span>
+    <button class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#userModal" onclick="openCreateModal()">
+      <i class="bi bi-plus-lg me-1"></i>Add User
+    </button>
+  </div>
+
+  <div id="content">
+    <div class="card table-card">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="fw-semibold">All Users</span>
+        <input type="text" id="searchUsers" class="form-control form-control-sm w-auto" placeholder="Search…"/>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody">
+            <tr><td colspan="5" class="text-center py-4 text-muted">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal fade" id="userModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Add User</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="userForm" novalidate>
+          <input type="hidden" id="editUserId"/>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
+            <input type="text" id="userName" class="form-control" required/>
+            <div class="invalid-feedback">Name is required.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+            <input type="email" id="userEmail" class="form-control" required/>
+            <div class="invalid-feedback">Valid email is required.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Password <span id="pwdNote" class="text-muted small"></span></label>
+            <input type="password" id="userPassword" class="form-control" placeholder="••••••••"/>
+          </div>
+          <div class="mb-1">
+            <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
+            <select id="userRole" class="form-select" required>
+              <option value="">Select role…</option>
+              <option value="ADMIN">Admin</option>
+              <option value="AGENT">Agent</option>
+              <option value="END_USER">End User</option>
+            </select>
+            <div class="invalid-feedback">Role is required.</div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="saveUserBtn">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Delete User</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">Delete user <strong id="deleteUserName"></strong>?</div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/app.js"></script>
+<script>
+let allUsers = [];
+let deleteUserId = null;
+const userModalEl = new bootstrap.Modal(document.getElementById('userModal'));
+const deleteModalEl = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+const roleColors = { ADMIN: 'danger', AGENT: 'warning', END_USER: 'secondary' };
+
+function renderUsers(users) {
+  const tbody = document.getElementById('userTableBody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">No users found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td><span class="text-muted">${u.userId}</span></td>
+      <td class="fw-semibold">${u.name}</td>
+      <td>${u.email}</td>
+      <td><span class="badge bg-${roleColors[u.role] || 'secondary'}">${u.role}</span></td>
+      <td>
+        <div class="d-flex gap-1">
+          <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal(${u.userId})">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete(${u.userId}, '${u.name.replace(/'/g,"\\'")}')">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function openCreateModal() {
+  document.getElementById('modalTitle').textContent = 'Add User';
+  document.getElementById('userForm').reset();
+  document.getElementById('userForm').classList.remove('was-validated');
+  document.getElementById('editUserId').value = '';
+  document.getElementById('pwdNote').textContent = '(required)';
+  document.getElementById('userPassword').required = true;
+}
+
+function openEditModal(id) {
+  const u = allUsers.find(u => u.userId === id);
+  if (!u) return;
+  document.getElementById('modalTitle').textContent = 'Edit User';
+  document.getElementById('userForm').classList.remove('was-validated');
+  document.getElementById('editUserId').value = u.userId;
+  document.getElementById('userName').value = u.name;
+  document.getElementById('userEmail').value = u.email;
+  document.getElementById('userPassword').value = '';
+  document.getElementById('userRole').value = u.role;
+  document.getElementById('pwdNote').textContent = '(leave blank to keep current)';
+  document.getElementById('userPassword').required = false;
+  userModalEl.show();
+}
+
+function confirmDelete(id, name) {
+  deleteUserId = id;
+  document.getElementById('deleteUserName').textContent = name;
+  deleteModalEl.show();
+}
+
+(async () => {
+  const user = await requireAuth();
+  if (!user) return;
+  if (user.role !== 'ADMIN') { window.location.href = 'dashboard.html'; return; }
+  buildSidebar(user, 'users');
+
+  const load = async () => {
+    allUsers = await API.get('/api/users');
+    renderUsers(allUsers);
+  };
+  await load();
+
+  document.getElementById('searchUsers').addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase();
+    renderUsers(allUsers.filter(u =>
+      u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q)
+    ));
+  });
+
+  document.getElementById('saveUserBtn').addEventListener('click', async () => {
+    const form = document.getElementById('userForm');
+    if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
+    const id = document.getElementById('editUserId').value;
+    const payload = {
+      name: document.getElementById('userName').value.trim(),
+      email: document.getElementById('userEmail').value.trim(),
+      password: document.getElementById('userPassword').value || null,
+      role: document.getElementById('userRole').value,
+    };
+    try {
+      if (id) {
+        await API.put(`/api/users/${id}`, payload);
+        showToast('User updated!');
+      } else {
+        await API.post('/api/users', payload);
+        showToast('User created!');
+      }
+      userModalEl.hide();
+      await load();
+    } catch(e) {
+      showToast('Failed: ' + e.message, 'danger');
+    }
+  });
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+    try {
+      await API.delete(`/api/users/${deleteUserId}`);
+      deleteModalEl.hide();
+      showToast('User deleted.');
+      await load();
+    } catch(e) {
+      showToast('Delete failed: ' + e.message, 'danger');
+    }
+  });
+})();
+</script>
+</body>
+</html>
